@@ -138,41 +138,6 @@ WantedBy=multi-user.target
 EOF
 
 
-# 设置防火墙
-if [ ! -f "/etc/iptables.up.rules" ]; then 
-    iptables-save > /etc/iptables.up.rules
-fi
-
-if [[ ${OS} =~ ^Ubuntu$|^Debian$ ]];then
-	iptables-restore < /etc/iptables.up.rules
-	clear
-	iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport $uport -j ACCEPT
-	iptables -I INPUT -m state --state NEW -m udp -p udp --dport $uport -j ACCEPT
-	iptables-save > /etc/iptables.up.rules
-fi
-
-if [[ ${OS} == CentOS ]];then
-	if [[ $CentOS_RHEL_version == 7 ]];then
-		systemctl status firewalld > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            firewall-cmd --permanent --zone=public --add-port=${uport}/tcp
-            firewall-cmd --permanent --zone=public --add-port=${uport}/udp
-            firewall-cmd --reload
-		else
-			iptables-restore < /etc/iptables.up.rules
-			iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport $uport -j ACCEPT
-    		iptables -I INPUT -m state --state NEW -m udp -p udp --dport $uport -j ACCEPT
-			iptables-save > /etc/iptables.up.rules
-		fi
-	else
-		iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport $uport -j ACCEPT
-    	iptables -I INPUT -m state --state NEW -m udp -p udp --dport $uport -j ACCEPT
-		/etc/init.d/iptables save
-		/etc/init.d/iptables restart
-	fi
-fi
-
-
 # 设置开机自启并启动 MTProxy
 systemctl daemon-reload
 systemctl enable MTProxy.service
